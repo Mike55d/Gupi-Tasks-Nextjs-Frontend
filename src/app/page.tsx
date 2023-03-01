@@ -199,7 +199,6 @@ const Home = () => {
       taskId,
       indexDestiny,
     });
-    console.log(res.data);
   }
 
   const changeOrder = async (newTaskIds:string[],columnId:string) => {
@@ -207,7 +206,6 @@ const Home = () => {
       newTaskIds,
       columnId
     });
-    console.log(res.data);
   }
 
   const handleDragEnd = (event: any) => {
@@ -273,27 +271,13 @@ const Home = () => {
       task,
       columnId
     });
-    console.log(res);
     getData();
-    // const taskId = uuidv4();
-    // const newTask = { ...task, _id: taskId };
-    // const newColumn = dataTasks.find((column: any) => column._id === columnId);
-    // const columnIndex = dataTasks.findIndex((column: any) => column._id === columnId);
-    // newColumn.tasks.push(newTask);
-    // newColumn.taskIds.push(taskId);
-    // const newDataTasks = [...dataTasks];
-    // newDataTasks[columnIndex] = newColumn;
-    // setDataTasks(newDataTasks);
-    // const newCurrentTasks = [...currentTasks];
-    // newCurrentTasks.push(newTask);
-    // setCurrentTasks(newCurrentTasks);
   }
 
   const handleDeleteTask = (taskId: any, columnId: any) => {
     const newCurrentTasks = [...currentTasks];
     const taskIndex = newCurrentTasks.findIndex(item => item._id === taskId);
     newCurrentTasks.splice(taskIndex, 1);
-    console.log(newCurrentTasks);
     setCurrentTasks(newCurrentTasks);
     const newColumn = dataTasks.find((column: any) => column._id === columnId);
     const columnIndex = dataTasks.findIndex((column: any) => column._id === columnId);
@@ -306,7 +290,6 @@ const Home = () => {
     setDataTasks(newDataTasks);
   }
 
-  console.log(dataTasks);
 
   return (
     <DragDropContext
