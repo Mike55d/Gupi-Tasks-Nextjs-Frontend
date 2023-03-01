@@ -5,13 +5,14 @@ import CardHeader from '@mui/material/CardHeader';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography'
 import styles from './page.module.css'
-import { tasks, columns } from './components/tasks-list';
+// import { tasks, columns } from './components/tasks-list';
 import { useEffect, useState } from 'react';
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 import { Box, Button, IconButton, Modal, TextField } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import { v4 as uuidv4 } from 'uuid';
+import axios from 'axios';
 
 const style = {
   position: 'absolute' as 'absolute',
@@ -25,15 +26,15 @@ const style = {
   p: 4,
 };
 
-const Task = ({ title, content, id, index, handleDeleteTask, columnId }: any) => {
+const Task = ({ title, content, _id, index, handleDeleteTask, columnId }: any) => {
 
   const handleDelete = () => {
-    handleDeleteTask(id, columnId)
+    handleDeleteTask(_id, columnId)
   }
 
   return (
     <Draggable
-      draggableId={id}
+      draggableId={_id}
       index={index}
     >
       {(provided) => (
@@ -152,7 +153,7 @@ const Column = ({ tasks, title, columnId, handleCreateTask, handleDeleteTask }: 
                 {...provided.droppableProps}
               >
                 {tasks.map((item: any, index: any) => (
-                  <Task title={item.title} content={item.content} id={item.id} key={item.id} index={index} handleDeleteTask={handleDeleteTask} columnId={columnId} />
+                  <Task title={item.title} content={item.content} _id={item._id} key={item._id} index={index} handleDeleteTask={handleDeleteTask} columnId={columnId} />
                 ))}
                 {provided.placeholder}
               </div>
@@ -170,19 +171,44 @@ const Home = () => {
   const [winReady, setwinReady] = useState(false);
   const [dataTasks, setDataTasks] = useState<any>([]);
   const [currentTasks, setCurrentTasks] = useState<any>([]);
+  const [currentColumns, setCurrentColumns] = useState<any>([]);
 
-  useEffect(() => {
-    const dataTasksParsed = columns.map(column => {
-      const tasksColumn = column.taskIds.map(id => tasks.find(task => task.id == id));
+  const getData = async () => {
+    const res = await axios.get('http://localhost:3001/tasks');
+    const dataTasksParsed = res.data.columns.map((column: any) => {
+      const tasksColumn = column.taskIds.map((_id: any) => res.data.tasks.find((task: any) => task._id == _id));
       return { ...column, tasks: tasksColumn }
     });
     setDataTasks(dataTasksParsed);
-    setCurrentTasks(tasks);
-  }, [columns, tasks]);
+    setCurrentTasks(res.data.tasks);
+    setCurrentColumns(res.data.columns);
+  }
+
+  useEffect(() => {
+    getData();
+  },[]);
 
   useEffect(() => {
     setTimeout(() => setwinReady(true), 500);
   }, []);
+
+  const changeColumn = async (columnId:string,columnIdDestiny:string,taskId:string,indexDestiny:any) => {
+    const res = await axios.post('http://localhost:3001/tasks/changeColumn',{
+      columnIdDestiny,
+      columnId,
+      taskId,
+      indexDestiny,
+    });
+    console.log(res.data);
+  }
+
+  const changeOrder = async (newTaskIds:string[],columnId:string) => {
+    const res = await axios.post('http://localhost:3001/tasks/changeOrder',{
+      newTaskIds,
+      columnId
+    });
+    console.log(res.data);
+  }
 
   const handleDragEnd = (event: any) => {
     const { destination, source, draggableId } = event;
@@ -197,11 +223,11 @@ const Home = () => {
       return;
     }
 
-    const column = dataTasks.find((column: any) => parseInt(column.id) == source.droppableId);
-    const columnDestiny = dataTasks.find((column: any) => parseInt(column.id) == destination.droppableId);
+    const column = dataTasks.find((column: any) => column._id == source.droppableId);
+    const columnDestiny = dataTasks.find((column: any) => column._id == destination.droppableId);
 
     if (column === columnDestiny) {
-      const columnIndex = columns.findIndex(column => parseInt(column.id) == source.droppableId);
+      const columnIndex = currentColumns.findIndex((column: any) => column._id == source.droppableId);
       const newTaskIds = column ? [...column.taskIds] : [];
       newTaskIds.splice(source.index, 1);
       newTaskIds.splice(destination.index, 0, draggableId);
@@ -209,15 +235,16 @@ const Home = () => {
         ...column,
         taskIds: newTaskIds
       }
-      const tasksColumn = newColumn.taskIds.map((id: any) => currentTasks.find((task: any) => task.id == id));
+      const tasksColumn = newColumn.taskIds.map((_id: any) => currentTasks.find((task: any) => task._id == _id));
       const newColumns = [...dataTasks];
       newColumns[columnIndex] = { ...newColumn, tasks: tasksColumn }
+      changeOrder(newTaskIds,column._id);
       setDataTasks(newColumns);
       return
     }
 
-    const columnIndex = columns.findIndex(column => parseInt(column.id) == source.droppableId);
-    const columnIndexDestiny = columns.findIndex(column => parseInt(column.id) == destination.droppableId);
+    const columnIndex = currentColumns.findIndex((column: any) => column._id == source.droppableId);
+    const columnIndexDestiny = currentColumns.findIndex((column: any) => column._id == destination.droppableId);
     const newTaskIds = column ? [...column.taskIds] : [];
     newTaskIds.splice(source.index, 1);
     const newTaskIdsDestiny = columnDestiny ? [...columnDestiny.taskIds] : [];
@@ -230,41 +257,47 @@ const Home = () => {
       ...columnDestiny,
       taskIds: newTaskIdsDestiny
     }
-    const tasksColumn = newColumn.taskIds.map((id: any) => currentTasks.find((task: any) => task.id == id));
-    const tasksColumnDestiny = newColumnDestiny.taskIds.map((id: any) => currentTasks.find((task: any) => task.id == id));
+    const tasksColumn = newColumn.taskIds.map((_id: any) => currentTasks.find((task: any) => task._id == _id));
+    const tasksColumnDestiny = newColumnDestiny.taskIds.map((_id: any) => currentTasks.find((task: any) => task._id == _id));
     const newColumns = [...dataTasks];
     newColumns[columnIndex] = { ...newColumn, tasks: tasksColumn };
     newColumns[columnIndexDestiny] = { ...newColumnDestiny, tasks: tasksColumnDestiny };
     setDataTasks(newColumns);
+    changeColumn(column._id,columnDestiny._id,draggableId,destination.index)
     return
 
   }
 
-  const handleCreateTask = (task: any, columnId: any) => {
-    const taskId = uuidv4();
-    const newTask = { ...task, id: taskId };
-    const newColumn = dataTasks.find((column: any) => column.id === columnId);
-    const columnIndex = dataTasks.findIndex((column: any) => column.id === columnId);
-    newColumn.tasks.push(newTask);
-    newColumn.taskIds.push(taskId);
-    const newDataTasks = [...dataTasks];
-    newDataTasks[columnIndex] = newColumn;
-    setDataTasks(newDataTasks);
-    const newCurrentTasks = [...currentTasks];
-    newCurrentTasks.push(newTask);
-    setCurrentTasks(newCurrentTasks);
+  const handleCreateTask = async (task: any, columnId: any) => {
+    const res = await axios.post('http://localhost:3001/tasks',{
+      task,
+      columnId
+    });
+    console.log(res);
+    getData();
+    // const taskId = uuidv4();
+    // const newTask = { ...task, _id: taskId };
+    // const newColumn = dataTasks.find((column: any) => column._id === columnId);
+    // const columnIndex = dataTasks.findIndex((column: any) => column._id === columnId);
+    // newColumn.tasks.push(newTask);
+    // newColumn.taskIds.push(taskId);
+    // const newDataTasks = [...dataTasks];
+    // newDataTasks[columnIndex] = newColumn;
+    // setDataTasks(newDataTasks);
+    // const newCurrentTasks = [...currentTasks];
+    // newCurrentTasks.push(newTask);
+    // setCurrentTasks(newCurrentTasks);
   }
 
   const handleDeleteTask = (taskId: any, columnId: any) => {
-    console.log(taskId, columnId)
     const newCurrentTasks = [...currentTasks];
-    const taskIndex = newCurrentTasks.findIndex(item => item.id === taskId);
+    const taskIndex = newCurrentTasks.findIndex(item => item._id === taskId);
     newCurrentTasks.splice(taskIndex, 1);
     console.log(newCurrentTasks);
     setCurrentTasks(newCurrentTasks);
-    const newColumn = dataTasks.find((column: any) => column.id === columnId);
-    const columnIndex = dataTasks.findIndex((column: any) => column.id === columnId);
-    const taskColumnIndex = newColumn.tasks.findIndex((item: any) => item.id === taskId);
+    const newColumn = dataTasks.find((column: any) => column._id === columnId);
+    const columnIndex = dataTasks.findIndex((column: any) => column._id === columnId);
+    const taskColumnIndex = newColumn.tasks.findIndex((item: any) => item._id === taskId);
     const taskIdsColumnIndex = newColumn.taskIds.findIndex((item: any) => item === taskId);
     newColumn.tasks.splice(taskColumnIndex, 1);
     newColumn.taskIds.splice(taskIdsColumnIndex, 1);
@@ -272,6 +305,8 @@ const Home = () => {
     newDataTasks[columnIndex] = newColumn;
     setDataTasks(newDataTasks);
   }
+
+  console.log(dataTasks);
 
   return (
     <DragDropContext
@@ -282,7 +317,7 @@ const Home = () => {
           winReady ? (
             <>
               {dataTasks.map((item: any) => (
-                <Column tasks={item.tasks} title={item.title} columnId={item.id} key={item.id} handleCreateTask={handleCreateTask} handleDeleteTask={handleDeleteTask} />
+                <Column tasks={item.tasks} title={item.title} columnId={item._id} key={item._id} handleCreateTask={handleCreateTask} handleDeleteTask={handleDeleteTask} />
               ))}
             </>
           ) : null
