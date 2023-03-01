@@ -1,3 +1,13 @@
 .card{
+    padding-top: 10px;
+}
+
+.inputs{
     margin-top: 10px;
+    width: 100%;
+}
+
+.buttons{
+    margin-top: 10px;
+    margin-right: 10px;
 }

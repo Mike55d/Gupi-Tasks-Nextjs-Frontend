@@ -8,8 +8,29 @@ import styles from './page.module.css'
 import { tasks, columns } from './components/tasks-list';
 import { useEffect, useMemo, useState } from 'react';
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
+import { Box, Button, CardActions, IconButton, Modal, TextField } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AddCircleIcon from '@mui/icons-material/AddCircle';
+import axios from 'axios';
+
+const style = {
+  position: 'absolute' as 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: 400,
+  bgcolor: 'background.paper',
+  border: '2px solid #000',
+  boxShadow: 24,
+  p: 4,
+};
 
 const Task = ({ title, content, id, index }: any) => {
+
+  const handleClick = () => {
+    console.log(id);
+  }
+
   return (
     <Draggable
       draggableId={id}
@@ -20,10 +41,16 @@ const Task = ({ title, content, id, index }: any) => {
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
+          className={styles.card}
         >
-          <Card variant="outlined" className={styles.card}>
+          <Card variant="outlined" >
             <CardHeader
               title={title}
+              action={
+                <IconButton aria-label="delete" onClick={handleClick}>
+                  <DeleteIcon />
+                </IconButton>
+              }
             />
             <CardContent >
               <Typography>{content}</Typography>
@@ -35,33 +62,103 @@ const Task = ({ title, content, id, index }: any) => {
   )
 }
 
-const Column = ({ tasks, title, columnId }: any) => {
+const TaskModal = ({ open, handleClose }: any) => {
+
+  const [newTask, setNewTask] = useState({
+    title: "",
+    content: ""
+  });
+
+  const handleCancel = () => {
+    setNewTask({
+      title: "",
+      content: ""
+    });
+    handleClose();
+  }
+
+  const handleCreate = () => {
+    console.log(newTask);
+    axios.post('/newTask',newTask);
+  }
+
   return (
+    <Modal
+      open={open}
+      onClose={handleClose}
+      aria-labelledby="modal-modal-title"
+      aria-describedby="modal-modal-description"
+    >
+      <Box sx={style}>
+        <Typography variant='h5'>Create Task</Typography>
+        <form>
+          <TextField
+            label="title"
+            variant="outlined"
+            className={styles.inputs}
+            onChange={(event) => setNewTask({ ...newTask, title: event.target.value })}
+            value={newTask.title}
+          />
+          <br />
+          <TextField
+            id="outlined-multiline-static"
+            label="content"
+            multiline
+            rows={4}
+            className={styles.inputs}
+            onChange={(event) => setNewTask({ ...newTask, content: event.target.value })}
+            value={newTask.content}
+          />
+        </form>
+        <Button variant="contained" color="error" className={styles.buttons} onClick={handleCancel}>Cancel</Button>
+        <Button variant="contained" color="success" className={styles.buttons} onClick={handleCreate}>Create</Button>
+      </Box>
+    </Modal>
+  )
+}
 
-    <Grid item xs={3}>
-      <Card variant="outlined">
-        <CardHeader
-          title={`${title}`}
-        />
-        <CardContent>
-          <Droppable
-            droppableId={columnId}
-          >{(provided) => (
-            <div
-              ref={provided.innerRef}
-              {...provided.droppableProps}
-            >
-              {tasks.map((item: any, index: any) => (
-                <Task title={item.title} content={item.content} id={item.id} key={item.id} index={index} />
-              ))}
-              {provided.placeholder}
-            </div>
-          )}
-          </Droppable>
-        </CardContent>
-      </Card>
-    </Grid>
+const Column = ({ tasks, title, columnId }: any) => {
 
+  const [open, setOpen] = useState(false);
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
+
+  const handleClick = () => {
+    handleOpen()
+  }
+
+  return (
+    <>
+      <Grid item xs={3}>
+        <Card variant="outlined">
+          <CardHeader
+            title={`${title}`}
+            action={
+              <IconButton aria-label="delete" onClick={handleClick}>
+                <AddCircleIcon />
+              </IconButton>
+            }
+          />
+          <CardContent>
+            <Droppable
+              droppableId={columnId}
+            >{(provided) => (
+              <div
+                ref={provided.innerRef}
+                {...provided.droppableProps}
+              >
+                {tasks.map((item: any, index: any) => (
+                  <Task title={item.title} content={item.content} id={item.id} key={item.id} index={index} />
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+            </Droppable>
+          </CardContent>
+        </Card>
+      </Grid>
+      <TaskModal open={open} handleClose={handleClose} />
+    </>
   )
 }
 
@@ -84,29 +181,57 @@ const Home = () => {
   const handleDragEnd = (event: any) => {
     const { destination, source, draggableId } = event;
 
-    if(!destination){
+    if (!destination) {
       return;
     }
-    if(
+    if (
       destination.droppableId === source.droppableId &&
       destination.index === source.index
-    ){
+    ) {
       return;
     }
 
-    const column = dataTasks.find((column:any) => parseInt(column.id) == source.droppableId);
+    const column = dataTasks.find((column: any) => parseInt(column.id) == source.droppableId);
+    const columnDestiny = dataTasks.find((column: any) => parseInt(column.id) == destination.droppableId);
+
+    if (column === columnDestiny) {
+      const columnIndex = columns.findIndex(column => parseInt(column.id) == source.droppableId);
+      const newTaskIds = column ? [...column.taskIds] : [];
+      newTaskIds.splice(source.index, 1);
+      newTaskIds.splice(destination.index, 0, draggableId);
+      const newColumn = {
+        ...column,
+        taskIds: newTaskIds
+      }
+      const tasksColumn = newColumn.taskIds.map((id: any) => tasks.find(task => task.id == id));
+      const newColumns = [...dataTasks];
+      newColumns[columnIndex] = { ...newColumn, tasks: tasksColumn }
+      setDataTasks(newColumns);
+      return
+    }
+
     const columnIndex = columns.findIndex(column => parseInt(column.id) == source.droppableId);
+    const columnIndexDestiny = columns.findIndex(column => parseInt(column.id) == destination.droppableId);
     const newTaskIds = column ? [...column.taskIds] : [];
-    newTaskIds.splice(source.index,1);
-    newTaskIds.splice(destination.index,0,draggableId);
+    newTaskIds.splice(source.index, 1);
+    const newTaskIdsDestiny = columnDestiny ? [...columnDestiny.taskIds] : [];
+    newTaskIdsDestiny.splice(destination.index, 0, draggableId);
     const newColumn = {
       ...column,
       taskIds: newTaskIds
     }
-    const tasksColumn = newColumn.taskIds.map((id:any) => tasks.find(task => task.id == id));
+    const newColumnDestiny = {
+      ...columnDestiny,
+      taskIds: newTaskIdsDestiny
+    }
+    const tasksColumn = newColumn.taskIds.map((id: any) => tasks.find(task => task.id == id));
+    const tasksColumnDestiny = newColumnDestiny.taskIds.map((id: any) => tasks.find(task => task.id == id));
     const newColumns = [...dataTasks];
-    newColumns[columnIndex] = {...newColumn,tasks: tasksColumn}
+    newColumns[columnIndex] = { ...newColumn, tasks: tasksColumn };
+    newColumns[columnIndexDestiny] = { ...newColumnDestiny, tasks: tasksColumnDestiny };
     setDataTasks(newColumns);
+    return
+
   }
 
   return (
