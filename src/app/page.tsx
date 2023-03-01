@@ -6,12 +6,12 @@ import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography'
 import styles from './page.module.css'
 import { tasks, columns } from './components/tasks-list';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
-import { Box, Button, CardActions, IconButton, Modal, TextField } from '@mui/material';
+import { Box, Button, IconButton, Modal, TextField } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
-import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
 
 const style = {
   position: 'absolute' as 'absolute',
@@ -25,10 +25,10 @@ const style = {
   p: 4,
 };
 
-const Task = ({ title, content, id, index }: any) => {
+const Task = ({ title, content, id, index, handleDeleteTask, columnId }: any) => {
 
-  const handleClick = () => {
-    console.log(id);
+  const handleDelete = () => {
+    handleDeleteTask(id, columnId)
   }
 
   return (
@@ -47,7 +47,7 @@ const Task = ({ title, content, id, index }: any) => {
             <CardHeader
               title={title}
               action={
-                <IconButton aria-label="delete" onClick={handleClick}>
+                <IconButton aria-label="delete" onClick={handleDelete}>
                   <DeleteIcon />
                 </IconButton>
               }
@@ -62,24 +62,29 @@ const Task = ({ title, content, id, index }: any) => {
   )
 }
 
-const TaskModal = ({ open, handleClose }: any) => {
+const TaskModal = ({ open, handleClose, columnId, handleCreateTask }: any) => {
 
   const [newTask, setNewTask] = useState({
     title: "",
     content: ""
   });
 
-  const handleCancel = () => {
+  const clearForm = () => {
     setNewTask({
       title: "",
       content: ""
     });
+  }
+
+  const handleCancel = () => {
+    clearForm();
     handleClose();
   }
 
   const handleCreate = () => {
-    console.log(newTask);
-    axios.post('/newTask',newTask);
+    handleCreateTask(newTask, columnId);
+    handleClose();
+    clearForm();
   }
 
   return (
@@ -117,7 +122,7 @@ const TaskModal = ({ open, handleClose }: any) => {
   )
 }
 
-const Column = ({ tasks, title, columnId }: any) => {
+const Column = ({ tasks, title, columnId, handleCreateTask, handleDeleteTask }: any) => {
 
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
@@ -126,7 +131,6 @@ const Column = ({ tasks, title, columnId }: any) => {
   const handleClick = () => {
     handleOpen()
   }
-
   return (
     <>
       <Grid item xs={3}>
@@ -148,7 +152,7 @@ const Column = ({ tasks, title, columnId }: any) => {
                 {...provided.droppableProps}
               >
                 {tasks.map((item: any, index: any) => (
-                  <Task title={item.title} content={item.content} id={item.id} key={item.id} index={index} />
+                  <Task title={item.title} content={item.content} id={item.id} key={item.id} index={index} handleDeleteTask={handleDeleteTask} columnId={columnId} />
                 ))}
                 {provided.placeholder}
               </div>
@@ -157,7 +161,7 @@ const Column = ({ tasks, title, columnId }: any) => {
           </CardContent>
         </Card>
       </Grid>
-      <TaskModal open={open} handleClose={handleClose} />
+      <TaskModal open={open} handleClose={handleClose} columnId={columnId} handleCreateTask={handleCreateTask} />
     </>
   )
 }
@@ -165,6 +169,7 @@ const Column = ({ tasks, title, columnId }: any) => {
 const Home = () => {
   const [winReady, setwinReady] = useState(false);
   const [dataTasks, setDataTasks] = useState<any>([]);
+  const [currentTasks, setCurrentTasks] = useState<any>([]);
 
   useEffect(() => {
     const dataTasksParsed = columns.map(column => {
@@ -172,6 +177,7 @@ const Home = () => {
       return { ...column, tasks: tasksColumn }
     });
     setDataTasks(dataTasksParsed);
+    setCurrentTasks(tasks);
   }, [columns, tasks]);
 
   useEffect(() => {
@@ -203,7 +209,7 @@ const Home = () => {
         ...column,
         taskIds: newTaskIds
       }
-      const tasksColumn = newColumn.taskIds.map((id: any) => tasks.find(task => task.id == id));
+      const tasksColumn = newColumn.taskIds.map((id: any) => currentTasks.find((task: any) => task.id == id));
       const newColumns = [...dataTasks];
       newColumns[columnIndex] = { ...newColumn, tasks: tasksColumn }
       setDataTasks(newColumns);
@@ -224,14 +230,47 @@ const Home = () => {
       ...columnDestiny,
       taskIds: newTaskIdsDestiny
     }
-    const tasksColumn = newColumn.taskIds.map((id: any) => tasks.find(task => task.id == id));
-    const tasksColumnDestiny = newColumnDestiny.taskIds.map((id: any) => tasks.find(task => task.id == id));
+    const tasksColumn = newColumn.taskIds.map((id: any) => currentTasks.find((task: any) => task.id == id));
+    const tasksColumnDestiny = newColumnDestiny.taskIds.map((id: any) => currentTasks.find((task: any) => task.id == id));
     const newColumns = [...dataTasks];
     newColumns[columnIndex] = { ...newColumn, tasks: tasksColumn };
     newColumns[columnIndexDestiny] = { ...newColumnDestiny, tasks: tasksColumnDestiny };
     setDataTasks(newColumns);
     return
 
+  }
+
+  const handleCreateTask = (task: any, columnId: any) => {
+    const taskId = uuidv4();
+    const newTask = { ...task, id: taskId };
+    const newColumn = dataTasks.find((column: any) => column.id === columnId);
+    const columnIndex = dataTasks.findIndex((column: any) => column.id === columnId);
+    newColumn.tasks.push(newTask);
+    newColumn.taskIds.push(taskId);
+    const newDataTasks = [...dataTasks];
+    newDataTasks[columnIndex] = newColumn;
+    setDataTasks(newDataTasks);
+    const newCurrentTasks = [...currentTasks];
+    newCurrentTasks.push(newTask);
+    setCurrentTasks(newCurrentTasks);
+  }
+
+  const handleDeleteTask = (taskId: any, columnId: any) => {
+    console.log(taskId, columnId)
+    const newCurrentTasks = [...currentTasks];
+    const taskIndex = newCurrentTasks.findIndex(item => item.id === taskId);
+    newCurrentTasks.splice(taskIndex, 1);
+    console.log(newCurrentTasks);
+    setCurrentTasks(newCurrentTasks);
+    const newColumn = dataTasks.find((column: any) => column.id === columnId);
+    const columnIndex = dataTasks.findIndex((column: any) => column.id === columnId);
+    const taskColumnIndex = newColumn.tasks.findIndex((item: any) => item.id === taskId);
+    const taskIdsColumnIndex = newColumn.taskIds.findIndex((item: any) => item === taskId);
+    newColumn.tasks.splice(taskColumnIndex, 1);
+    newColumn.taskIds.splice(taskIdsColumnIndex, 1);
+    const newDataTasks = [...dataTasks];
+    newDataTasks[columnIndex] = newColumn;
+    setDataTasks(newDataTasks);
   }
 
   return (
@@ -243,7 +282,7 @@ const Home = () => {
           winReady ? (
             <>
               {dataTasks.map((item: any) => (
-                <Column tasks={item.tasks} title={item.title} columnId={item.id} key={item.id} />
+                <Column tasks={item.tasks} title={item.title} columnId={item.id} key={item.id} handleCreateTask={handleCreateTask} handleDeleteTask={handleDeleteTask} />
               ))}
             </>
           ) : null

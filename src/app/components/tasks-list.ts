@@ -13,9 +13,9 @@ export const tasks = [
 ]
 
 export const columns = [
-    {id:'1',title:'column a',taskIds:['1','2','3']},
-    {id:'2',title:'column b',taskIds:['4','5','6']},
-    {id:'3',title:'column c',taskIds:['7','8','9','10']},
+    {id:'1',title:'Approved',taskIds:['1','2','3']},
+    {id:'2',title:'In progress',taskIds:['4','5','6']},
+    {id:'3',title:'Done',taskIds:['7','8','9','10']},
 ]
 
 export const columnOrder = ['1']
