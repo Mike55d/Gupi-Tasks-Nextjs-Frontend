@@ -1,91 +1,131 @@
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
+'use client';
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
+import CardHeader from '@mui/material/CardHeader';
+import Grid from '@mui/material/Grid';
+import Typography from '@mui/material/Typography'
 import styles from './page.module.css'
+import { tasks, columns } from './components/tasks-list';
+import { useEffect, useMemo, useState } from 'react';
+import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 
-const inter = Inter({ subsets: ['latin'] })
-
-export default function Home() {
+const Task = ({ title, content, id, index }: any) => {
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
+    <Draggable
+      draggableId={id}
+      index={index}
+    >
+      {(provided) => (
+        <div
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+        >
+          <Card variant="outlined" className={styles.card}>
+            <CardHeader
+              title={title}
             />
-          </a>
+            <CardContent >
+              <Typography>{content}</Typography>
+            </CardContent>
+          </Card>
         </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-        <div className={styles.thirteen}>
-          <Image src="/thirteen.svg" alt="13" width={40} height={31} priority />
-        </div>
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://beta.nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={inter.className}>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p className={inter.className}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={inter.className}>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p className={inter.className}>Explore the Next.js 13 playground.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={inter.className}>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p className={inter.className}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+      )}
+    </Draggable>
   )
 }
+
+const Column = ({ tasks, title, columnId }: any) => {
+  return (
+
+    <Grid item xs={3}>
+      <Card variant="outlined">
+        <CardHeader
+          title={`${title}`}
+        />
+        <CardContent>
+          <Droppable
+            droppableId={columnId}
+          >{(provided) => (
+            <div
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+            >
+              {tasks.map((item: any, index: any) => (
+                <Task title={item.title} content={item.content} id={item.id} key={item.id} index={index} />
+              ))}
+              {provided.placeholder}
+            </div>
+          )}
+          </Droppable>
+        </CardContent>
+      </Card>
+    </Grid>
+
+  )
+}
+
+const Home = () => {
+  const [winReady, setwinReady] = useState(false);
+  const [dataTasks, setDataTasks] = useState<any>([]);
+
+  useEffect(() => {
+    const dataTasksParsed = columns.map(column => {
+      const tasksColumn = column.taskIds.map(id => tasks.find(task => task.id == id));
+      return { ...column, tasks: tasksColumn }
+    });
+    setDataTasks(dataTasksParsed);
+  }, [columns, tasks]);
+
+  useEffect(() => {
+    setTimeout(() => setwinReady(true), 500);
+  }, []);
+
+  const handleDragEnd = (event: any) => {
+    const { destination, source, draggableId } = event;
+
+    if(!destination){
+      return;
+    }
+    if(
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ){
+      return;
+    }
+
+    const column = dataTasks.find((column:any) => parseInt(column.id) == source.droppableId);
+    const columnIndex = columns.findIndex(column => parseInt(column.id) == source.droppableId);
+    const newTaskIds = column ? [...column.taskIds] : [];
+    newTaskIds.splice(source.index,1);
+    newTaskIds.splice(destination.index,0,draggableId);
+    const newColumn = {
+      ...column,
+      taskIds: newTaskIds
+    }
+    const tasksColumn = newColumn.taskIds.map((id:any) => tasks.find(task => task.id == id));
+    const newColumns = [...dataTasks];
+    newColumns[columnIndex] = {...newColumn,tasks: tasksColumn}
+    setDataTasks(newColumns);
+  }
+
+  return (
+    <DragDropContext
+      onDragEnd={handleDragEnd}
+    >
+      <Grid container spacing={2}>
+        {
+          winReady ? (
+            <>
+              {dataTasks.map((item: any) => (
+                <Column tasks={item.tasks} title={item.title} columnId={item.id} key={item.id} />
+              ))}
+            </>
+          ) : null
+        }
+      </Grid>
+    </DragDropContext>
+  )
+}
+
+export default Home;
