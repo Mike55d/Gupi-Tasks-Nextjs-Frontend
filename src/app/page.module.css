@@ -1,13 +1,49 @@
-.card{
-    padding-top: 10px;
+.card {
+    padding-top: 3px;
+    padding-bottom: 3px;
 }
 
-.inputs{
+.inputs {
     margin-top: 10px;
     width: 100%;
 }
 
-.buttons{
+.buttons {
     margin-top: 10px;
     margin-right: 10px;
+}
+
+.cardHeader {
+    background-color: rgb(235, 236, 240);
+    padding-top: 8px !important;
+    padding-bottom: 5px !important;
+}
+
+.cardHeaderTask {
+    padding-top: 5px !important;
+    padding-bottom: 5px !important;
+    font-size: 20px !important;
+}
+
+.cardColumn {
+    background-color: rgb(235, 236, 240);
+}
+
+.cardTask {
+    height: 80px;
+    overflow-y: auto;
+}
+
+.cardContent {
+    padding: 8px !important;
+}
+
+.cardContentTask {
+    padding-top: 0px !important;
+    padding-bottom: 5px !important;
+}
+
+.contentTask {
+    color: #7B8FA1;
+    font-size: 10px;
 }

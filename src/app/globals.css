@@ -1,0 +1,13 @@
+body{
+    background-color:rgb(76, 154, 255);
+}
+
+.MuiPaper-root.MuiPaper-outlined.MuiPaper-rounded::-webkit-scrollbar {
+    width: 5px;
+    height: 8px;
+    border-radius: 2px;
+  }
+
+.MuiPaper-root.MuiPaper-outlined.MuiPaper-rounded::-webkit-scrollbar-thumb {
+    background: #BFEAF5;
+  }
