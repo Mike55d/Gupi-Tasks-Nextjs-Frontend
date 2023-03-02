@@ -56,7 +56,7 @@ const ColumnModal = ({ open, handleClose, reloadData }: any) => {
                     onSubmit={handleSubmit}
                 >
                     {formik => (
-                        <form id="columnForm" onSubmit={formik.handleSubmit}>
+                        <form id="columnForm" onSubmit={formik.handleSubmit} className={styles.formModal}>
                             <TextField
                                 label="title"
                                 variant="outlined"
@@ -68,7 +68,6 @@ const ColumnModal = ({ open, handleClose, reloadData }: any) => {
                                 ) : null}
                                 {...formik.getFieldProps('title')}
                             />
-                            { }
                         </form>
                     )}
                 </Formik>
