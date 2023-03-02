@@ -186,14 +186,14 @@ const Home = () => {
 
   useEffect(() => {
     getData();
-  },[]);
+  }, []);
 
   useEffect(() => {
     setTimeout(() => setwinReady(true), 500);
   }, []);
 
-  const changeColumn = async (columnId:string,columnIdDestiny:string,taskId:string,indexDestiny:any) => {
-    const res = await axios.post('http://localhost:3001/tasks/changeColumn',{
+  const changeColumn = async (columnId: string, columnIdDestiny: string, taskId: string, indexDestiny: any) => {
+    const res = await axios.post('http://localhost:3001/tasks/changeColumn', {
       columnIdDestiny,
       columnId,
       taskId,
@@ -201,8 +201,8 @@ const Home = () => {
     });
   }
 
-  const changeOrder = async (newTaskIds:string[],columnId:string) => {
-    const res = await axios.post('http://localhost:3001/tasks/changeOrder',{
+  const changeOrder = async (newTaskIds: string[], columnId: string) => {
+    const res = await axios.post('http://localhost:3001/tasks/changeOrder', {
       newTaskIds,
       columnId
     });
@@ -236,7 +236,7 @@ const Home = () => {
       const tasksColumn = newColumn.taskIds.map((_id: any) => currentTasks.find((task: any) => task._id == _id));
       const newColumns = [...dataTasks];
       newColumns[columnIndex] = { ...newColumn, tasks: tasksColumn }
-      changeOrder(newTaskIds,column._id);
+      changeOrder(newTaskIds, column._id);
       setDataTasks(newColumns);
       return
     }
@@ -261,33 +261,27 @@ const Home = () => {
     newColumns[columnIndex] = { ...newColumn, tasks: tasksColumn };
     newColumns[columnIndexDestiny] = { ...newColumnDestiny, tasks: tasksColumnDestiny };
     setDataTasks(newColumns);
-    changeColumn(column._id,columnDestiny._id,draggableId,destination.index)
+    changeColumn(column._id, columnDestiny._id, draggableId, destination.index)
     return
 
   }
 
-  const handleCreateTask = async (task: any, columnId: any) => {
-    const res = await axios.post('http://localhost:3001/tasks',{
+  const handleCreateTask = async (task: any, columnId: string) => {
+    await axios.post('http://localhost:3001/tasks', {
       task,
       columnId
     });
     getData();
   }
 
-  const handleDeleteTask = (taskId: any, columnId: any) => {
-    const newCurrentTasks = [...currentTasks];
-    const taskIndex = newCurrentTasks.findIndex(item => item._id === taskId);
-    newCurrentTasks.splice(taskIndex, 1);
-    setCurrentTasks(newCurrentTasks);
-    const newColumn = dataTasks.find((column: any) => column._id === columnId);
-    const columnIndex = dataTasks.findIndex((column: any) => column._id === columnId);
-    const taskColumnIndex = newColumn.tasks.findIndex((item: any) => item._id === taskId);
-    const taskIdsColumnIndex = newColumn.taskIds.findIndex((item: any) => item === taskId);
-    newColumn.tasks.splice(taskColumnIndex, 1);
-    newColumn.taskIds.splice(taskIdsColumnIndex, 1);
-    const newDataTasks = [...dataTasks];
-    newDataTasks[columnIndex] = newColumn;
-    setDataTasks(newDataTasks);
+  const handleDeleteTask = async (taskId: string, columnId: string) => {
+    await axios.delete('http://localhost:3001/tasks', {
+      data: {
+        taskId,
+        columnId
+      }
+    });
+    getData();
   }
 
 
