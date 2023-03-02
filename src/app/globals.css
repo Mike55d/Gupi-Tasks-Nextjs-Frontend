@@ -11,3 +11,23 @@ body{
 .MuiPaper-root.MuiPaper-outlined.MuiPaper-rounded::-webkit-scrollbar-thumb {
     background: #BFEAF5;
   }
+
+span.MuiTypography-root.MuiTypography-h5{
+  color: #404258;
+  font-weight: bold;
+  font-size: 20px;
+}
+
+span.MuiTypography-root.MuiTypography-h6{
+  color: #474E68;
+  font-weight: bold;
+  font-size: 15px;
+}
+
+input.MuiInputBase-input{
+  background: white !important;
+}
+
+div.MuiInputBase-root.MuiOutlinedInput-root{
+  background: white !important;
+}
