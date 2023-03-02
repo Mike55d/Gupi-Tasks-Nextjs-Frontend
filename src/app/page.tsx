@@ -141,12 +141,12 @@ const Home = () => {
 
   return (
     <>
-      <Grid container>
+      <Grid container style={{marginTop:20, paddingLeft:10, paddingRight:10}}>
         <Grid item xs={11}>
           <DragDropContext
             onDragEnd={handleDragEnd}
           >
-            <Grid container spacing={2}>
+            <Grid container spacing={1}>
               {
                 winReady ? (
                   <>
