@@ -4,12 +4,25 @@ import { useEffect, useState } from 'react';
 import { DragDropContext } from "react-beautiful-dnd";
 import axios from 'axios';
 import Column from "./components/Column";
+import Button from '@mui/material/Button';
+import AddCircleIcon from '@mui/icons-material/AddCircle';
+import ColumnModal from './components/ColumnModal';
+import { ToastContainer } from 'react-toastify';
 
 const Home = () => {
   const [winReady, setwinReady] = useState(false);
   const [dataTasks, setDataTasks] = useState<any>([]);
   const [currentTasks, setCurrentTasks] = useState<any>([]);
   const [currentColumns, setCurrentColumns] = useState<any>([]);
+  const [openColumnModal, setOpenColumnModal] = useState<boolean>(false);
+  
+  const handleCloseColumnModal = () => {
+    setOpenColumnModal(false);
+  }
+
+  const handleOpenColumnModal = () => {
+    setOpenColumnModal(true);
+  }
 
   const getData = async () => {
     const res = await axios.get('http://localhost:3001/tasks');
@@ -120,23 +133,41 @@ const Home = () => {
     getData();
   }
 
+  const handleDeleteColumn = async (columnId:string) => {
+    await axios.delete(`http://localhost:3001/columns/${columnId}`);
+    getData();
+  }
+
 
   return (
-    <DragDropContext
-      onDragEnd={handleDragEnd}
-    >
-      <Grid container spacing={2}>
-        {
-          winReady ? (
-            <>
-              {dataTasks.map((item: any) => (
-                <Column tasks={item.tasks} title={item.title} columnId={item._id} key={item._id} handleCreateTask={handleCreateTask} handleDeleteTask={handleDeleteTask} />
-              ))}
-            </>
-          ) : null
-        }
+    <>
+      <Grid container>
+        <Grid item xs={11}>
+          <DragDropContext
+            onDragEnd={handleDragEnd}
+          >
+            <Grid container spacing={2}>
+              {
+                winReady ? (
+                  <>
+                    {dataTasks.map((item: any) => (
+                      <Column tasks={item.tasks} title={item.title} columnId={item._id} key={item._id} handleCreateTask={handleCreateTask} handleDeleteTask={handleDeleteTask} handleDeleteColumn={handleDeleteColumn} />
+                    ))}
+                  </>
+                ) : null
+              }
+            </Grid>
+          </DragDropContext>
+        </Grid>
+        <Grid item xs={1}>
+          <Button variant="contained" color='success' endIcon={<AddCircleIcon />} onClick={handleOpenColumnModal}>
+            Column
+          </Button>
+        </Grid>
       </Grid>
-    </DragDropContext>
+      <ColumnModal open={openColumnModal} handleClose={handleCloseColumnModal} reloadData={getData}/>
+      <ToastContainer />
+    </>
   )
 }
 

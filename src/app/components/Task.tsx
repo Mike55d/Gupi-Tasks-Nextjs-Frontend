@@ -30,8 +30,8 @@ const Task = ({ title, content, _id, index, handleDeleteTask, columnId }: any) =
                         <CardHeader
                             title={title}
                             action={
-                                <IconButton aria-label="delete" onClick={handleDelete}>
-                                    <ClearIcon />
+                                <IconButton size='small' aria-label="delete" color='error' onClick={handleDelete}>
+                                    <ClearIcon fontSize='small' />
                                 </IconButton>
                             }
                             className={styles.cardHeaderTask}
