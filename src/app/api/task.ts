@@ -46,7 +46,8 @@ export const deleteTask = async (params: { taskId: string, columnId: string }) =
   return data;
 }
 
-export const getData = async (): Promise<{ tasks: Task[], columns: Column[] }> => {
+export const getData = async (): Promise<{ tasks: Task[], columns: Column[],orderColumns
+:string[]}> => {
   const { data } = await axios.get(`${basePath}/tasks`);
   return data;
 }

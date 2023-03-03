@@ -1,7 +1,7 @@
 'use client';
 import Grid from '@mui/material/Grid';
 import { useEffect, useState } from 'react';
-import { DragDropContext, DropResult } from "react-beautiful-dnd";
+import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import Column from "./Column";
 import Button from '@mui/material/Button';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
@@ -10,22 +10,28 @@ import { ToastContainer } from 'react-toastify';
 import { useMutation, useQuery } from 'react-query';
 import { changeColumnTask, changeOrderTask, getData } from "../api/task";
 import { Column as ColumnModel, DataTasks, Task } from '../models';
+import { changeOrderColumn } from '../api/column';
 
 const Home = () => {
   const [winReady, setwinReady] = useState(false);
-  const [dataTasks, setDataTasks] = useState<DataTasks[]>([]);
+  const [dataTasks, setDataTasks] = useState<(DataTasks | undefined)[]>([]);
+  const [dataOrder, setDataOrder] = useState<string[]>([]);
   const [openColumnModal, setOpenColumnModal] = useState<boolean>(false);
   const { data } = useQuery("dataTasks", getData);
   const { mutate: changeColumn } = useMutation(changeColumnTask);
   const { mutate: changeOrder } = useMutation(changeOrderTask);
+  const { mutate: changeOrderCol } = useMutation(changeOrderColumn);
 
   useEffect(() => {
     if (!data) return;
-    const dataTasksParsed: DataTasks[] = data.columns.map((column: ColumnModel) => {
+    const columns = data.orderColumns.map((idColumn:string) => data.columns.find(column => column._id == idColumn))
+    const dataTasksParsed: (DataTasks | undefined)[] = columns.map((column: ColumnModel | undefined) => {
+      if(!column) return;
       const tasksColumn = column.taskIds.map((_id: string) => data.tasks.find((task: Task) => task._id == _id));
       return { ...column, tasks: tasksColumn }
     });
     setDataTasks(dataTasksParsed);
+    setDataOrder(data.orderColumns);
   }, [data])
 
   useEffect(() => {
@@ -36,9 +42,8 @@ const Home = () => {
     setOpenColumnModal(value);
   }
 
-  const handleDragEnd = (event: DropResult) => {
+  const handleDragTask = (event: DropResult) => {
     const { destination, source, draggableId } = event;
-
     if (!destination) {
       return;
     }
@@ -49,8 +54,8 @@ const Home = () => {
       return;
     }
     if (!data) return;
-    const column = dataTasks.find((column: DataTasks) => column._id == source.droppableId);
-    const columnDestiny = dataTasks.find((column: DataTasks) => column._id == destination.droppableId);
+    const column = dataTasks.find((column: (DataTasks | undefined)) => column?._id == source.droppableId);
+    const columnDestiny = dataTasks.find((column: (DataTasks | undefined)) => column?._id == destination.droppableId);
     if (!column || !columnDestiny) return;
 
     if (column === columnDestiny) {
@@ -98,6 +103,41 @@ const Home = () => {
     });
   }
 
+  const handleDragColumn = (event: DropResult) => {
+    const { destination, source, draggableId } = event;
+    if (!destination) {
+      return;
+    }
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) {
+      return;
+    }
+    if (!data) return;
+    const newDataOrder = [...dataOrder];
+    newDataOrder.splice(source.index, 1);
+    newDataOrder.splice(destination.index, 0, draggableId);
+    const columns = newDataOrder.map((idColumn:string) => data.columns.find(column => column._id == idColumn))
+    const dataTasksParsed: (DataTasks | undefined)[] = columns.map((column: ColumnModel | undefined) => {
+      if(!column) return;
+      const tasksColumn = column.taskIds.map((_id: string) => data.tasks.find((task: Task) => task._id == _id));
+      return { ...column, tasks: tasksColumn }
+    });
+    setDataTasks(dataTasksParsed);
+    setDataOrder(newDataOrder);
+    changeOrderCol(newDataOrder);
+  }
+
+  const handleDragEnd = (event: DropResult) => {
+    const { type } = event;
+    if (type == 'task') {
+      handleDragTask(event);
+    } else {
+      handleDragColumn(event);
+    }
+  }
+
   return (
     <>
       <Grid container style={{ marginTop: 20, paddingLeft: 10, paddingRight: 10 }}>
@@ -105,17 +145,20 @@ const Home = () => {
           <DragDropContext
             onDragEnd={handleDragEnd}
           >
-            <Grid container spacing={1}>
-              {
-                winReady ? (
-                  <>
-                    {dataTasks.map((item: DataTasks) => (
-                      <Column {...item} key={item._id} />
-                    ))}
-                  </>
-                ) : null
-              }
-            </Grid>
+            {winReady ? (
+              <Droppable droppableId='all-columns' direction='horizontal' type='column'>
+                {provided => (
+                  <Grid container spacing={1} {...provided.droppableProps} ref={provided.innerRef}>
+                    {dataTasks.map((item: (DataTasks | undefined), index: number) => {
+                      return item ? (
+                        <Column {...item} key={item._id} index={index} />
+                      ): null
+                    })}
+                    {provided.placeholder}
+                  </Grid>
+                )}
+              </Droppable>
+            ) : null}
           </DragDropContext>
         </Grid>
         <Grid item xs={1}>
