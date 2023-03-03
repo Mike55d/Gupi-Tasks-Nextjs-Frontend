@@ -4,6 +4,9 @@ import styles from '../page.module.css'
 import { Box, Button, Modal, TextField } from '@mui/material';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
+import { useMutation, useQueryClient } from 'react-query';
+import { createTask } from '../api/task';
+import { TaskForm } from '../models';
 
 const style = {
     position: 'absolute' as 'absolute',
@@ -27,16 +30,26 @@ const validationSchema = Yup.object({
     content: Yup.string().required('content required'),
 })
 
-const TaskModal = ({ open, handleClose, columnId, handleCreateTask }: any) => {
+type TaskModalType = {
+    open: boolean,
+    handleClose: () => void;
+    columnId: string;
+}
+
+const TaskModal = ({ open, handleClose, columnId }: TaskModalType) => {
+
+    const queryClient = useQueryClient()
+    const { mutate } = useMutation(createTask, {onSuccess: () => {
+      queryClient.invalidateQueries("dataTasks");
+    }});
 
     const handleCancel = () => {
         handleClose();
     }
 
-    const handleSubmit = (form: any,formik:any) => {
-        handleCreateTask(form, columnId);
+    const handleSubmit = (task: TaskForm) => {
+        mutate({ task, columnId })
         handleClose();
-        formik.resetForm(initialValues);
     }
 
     return (

@@ -14,26 +14,28 @@ import styles from '../page.module.css';
 import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useMutation, useQueryClient } from 'react-query';
+import { deleteColumn } from '../api/column';
+import { DataTasks, Task as TaskModel } from '../models';
 
 
-const Column = ({ tasks, title, columnId, handleCreateTask, handleDeleteTask, handleDeleteColumn }: any) => {
+const Column = ({ _id, tasks, title }: DataTasks) => {
 
     const [open, setOpen] = useState(false);
-    const handleOpen = () => setOpen(true);
-    const handleClose = () => setOpen(false);
-
-    const handleClick = () => {
-        handleOpen()
-    }
+    const queryClient = useQueryClient()
+    const { mutate } = useMutation(deleteColumn, {
+        onSuccess: () => {
+            queryClient.invalidateQueries("dataTasks");
+        }
+    });
 
     const validateDelete = () => {
         if (tasks.length) {
             toast.warning("Please remove all tasks from column");
             return;
         }
-        handleDeleteColumn(columnId);
+        mutate(_id)
     }
-
 
     return (
         <>
@@ -43,36 +45,34 @@ const Column = ({ tasks, title, columnId, handleCreateTask, handleDeleteTask, ha
                         title={`${title}`}
                         action={
                             <>
-                                <IconButton aria-label="delete" color='success' onClick={handleClick}>
+                                <IconButton aria-label="delete" color='success' onClick={() => setOpen(true)}>
                                     <AddCircleIcon />
                                 </IconButton>
                                 <IconButton aria-label="delete" color='error' onClick={validateDelete}>
                                     <RemoveCircleIcon />
                                 </IconButton>
                             </>
-
                         }
                         className={styles.cardHeader}
                     />
                     <CardContent className={styles.cardContent}>
                         <Droppable
-                            droppableId={columnId}
+                            droppableId={_id}
                         >{(provided) => (
                             <div
                                 ref={provided.innerRef}
                                 {...provided.droppableProps}
                             >
-                                {tasks.map((item: any, index: any) => (
-                                    <Task
-                                        title={item.title}
-                                        content={item.content}
-                                        _id={item._id}
-                                        key={item._id}
-                                        index={index}
-                                        handleDeleteTask={handleDeleteTask}
-                                        columnId={columnId}
-                                    />
-                                ))}
+                                {tasks.map((item: TaskModel | undefined, index: number) => {
+                                    return item ? (
+                                        <Task
+                                            {...item}
+                                            key={item._id}
+                                            index={index}
+                                            columnId={_id}
+                                        />
+                                    ) : null
+                                })}
                                 {provided.placeholder}
                             </div>
                         )}
@@ -82,9 +82,8 @@ const Column = ({ tasks, title, columnId, handleCreateTask, handleDeleteTask, ha
             </Grid>
             <TaskModal
                 open={open}
-                handleClose={handleClose}
-                columnId={columnId}
-                handleCreateTask={handleCreateTask}
+                handleClose={() => setOpen(false)}
+                columnId={_id}
             />
         </>
     )

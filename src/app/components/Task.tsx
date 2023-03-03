@@ -7,11 +7,27 @@ import styles from '../page.module.css';
 import { Draggable } from "react-beautiful-dnd";
 import { IconButton } from '@mui/material';
 import ClearIcon from '@mui/icons-material/Clear';
+import { useMutation, useQueryClient } from 'react-query';
+import { deleteTask } from '../api/task';
+import { Task as TaskModel } from '../models';
 
-const Task = ({ title, content, _id, index, handleDeleteTask, columnId }: any) => {
+const Task = ({
+    _id,
+    columnId,
+    content,
+    index,
+    title
+}: (TaskModel & { columnId: string, index: number })) => {
+
+    const queryClient = useQueryClient()
+    const { mutate } = useMutation(deleteTask, {
+        onSuccess: () => {
+            queryClient.invalidateQueries("dataTasks");
+        }
+    });
 
     const handleDelete = () => {
-        handleDeleteTask(_id, columnId)
+        mutate({ taskId: _id, columnId })
     }
 
     return (
@@ -35,7 +51,7 @@ const Task = ({ title, content, _id, index, handleDeleteTask, columnId }: any) =
                                 </IconButton>
                             }
                             className={styles.cardHeaderTask}
-                            titleTypographyProps={{variant:'h6' }}
+                            titleTypographyProps={{ variant: 'h6' }}
                         />
                         <CardContent className={styles.cardContentTask}>
                             <Typography className={styles.contentTask}>{content}</Typography>

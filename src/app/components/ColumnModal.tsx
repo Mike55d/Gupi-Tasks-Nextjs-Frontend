@@ -4,7 +4,8 @@ import styles from '../page.module.css'
 import { Box, Button, Modal, TextField } from '@mui/material';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import axios from "axios";
+import { useMutation, useQueryClient } from 'react-query';
+import { createColumn } from '../api/column';
 
 const style = {
     position: 'absolute' as 'absolute',
@@ -26,25 +27,28 @@ const validationSchema = Yup.object({
     title: Yup.string().required('title required'),
 })
 
-const ColumnModal = ({ open, handleClose, reloadData }: any) => {
+type ColumnModalType = {
+    open: boolean,
+    toggleModal: (value:boolean) => void;
+}
 
-    const handleCancel = () => {
-        handleClose();
-    }
+const ColumnModal = ({ open, toggleModal }: ColumnModalType) => {
 
-    const handleSubmit = async (form: {title:string}) => {
-        await axios.post('http://localhost:3001/columns', {
-            ...form,
-            taskIds:[]
-        });
-        reloadData();
-        handleClose();
+    const queryClient = useQueryClient()
+    const { mutate } = useMutation(createColumn, {
+        onSuccess: () => {
+            queryClient.invalidateQueries("dataTasks");
+        }
+    });
+
+    const handleSubmit = async (form: { title: string }) => {
+        mutate(form);
     }
 
     return (
         <Modal
             open={open}
-            onClose={handleClose}
+            onClose={() => toggleModal(false)}
             aria-labelledby="modal-modal-title"
             aria-describedby="modal-modal-description"
         >
@@ -75,7 +79,7 @@ const ColumnModal = ({ open, handleClose, reloadData }: any) => {
                     variant="contained"
                     color="error"
                     className={styles.buttons}
-                    onClick={handleCancel}
+                    onClick={() => toggleModal(false)}
                 >
                     Cancel
                 </Button>
