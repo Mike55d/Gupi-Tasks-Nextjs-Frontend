@@ -43,6 +43,7 @@ const ColumnModal = ({ open, toggleModal }: ColumnModalType) => {
 
     const handleSubmit = async (form: { title: string }) => {
         mutate(form);
+        toggleModal(false);
     }
 
     return (
