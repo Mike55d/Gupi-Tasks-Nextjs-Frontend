@@ -24,7 +24,7 @@ const Home = () => {
 
   useEffect(() => {
     if (!data) return;
-    const columns = data.orderColumns.map((idColumn:string) => data.columns.find(column => column._id == idColumn))
+    const columns = data.orderColumns.map((idColumn:string) => data.columns.find(column => column._id == idColumn));
     const dataTasksParsed: (DataTasks | undefined)[] = columns.map((column: ColumnModel | undefined) => {
       if(!column) return;
       const tasksColumn = column.taskIds.map((_id: string) => data.tasks.find((task: Task) => task._id == _id));
@@ -54,12 +54,13 @@ const Home = () => {
       return;
     }
     if (!data) return;
+    const columns = dataOrder.map((idColumn:string) => data.columns.find(column => column._id == idColumn));
     const column = dataTasks.find((column: (DataTasks | undefined)) => column?._id == source.droppableId);
     const columnDestiny = dataTasks.find((column: (DataTasks | undefined)) => column?._id == destination.droppableId);
     if (!column || !columnDestiny) return;
 
     if (column === columnDestiny) {
-      const columnIndex = data.columns.findIndex((column: ColumnModel) => column._id == source.droppableId);
+      const columnIndex = columns.findIndex((column: ColumnModel | undefined) => column?._id == source.droppableId);
       const newTaskIds = column ? [...column.taskIds] : [];
       newTaskIds.splice(source.index, 1);
       newTaskIds.splice(destination.index, 0, draggableId);
@@ -75,8 +76,8 @@ const Home = () => {
       return
     }
 
-    const columnIndex = data.columns.findIndex((column: ColumnModel) => column._id == source.droppableId);
-    const columnIndexDestiny = data.columns.findIndex((column: ColumnModel) => column._id == destination.droppableId);
+    const columnIndex = columns.findIndex((column: ColumnModel | undefined) => column?._id == source.droppableId);
+    const columnIndexDestiny = columns.findIndex((column: ColumnModel | undefined) => column?._id == destination.droppableId);
     const newTaskIds = column ? [...column.taskIds] : [];
     newTaskIds.splice(source.index, 1);
     const newTaskIdsDestiny = columnDestiny ? [...columnDestiny.taskIds] : [];
@@ -118,7 +119,7 @@ const Home = () => {
     const newDataOrder = [...dataOrder];
     newDataOrder.splice(source.index, 1);
     newDataOrder.splice(destination.index, 0, draggableId);
-    const columns = newDataOrder.map((idColumn:string) => data.columns.find(column => column._id == idColumn))
+    const columns = newDataOrder.map((idColumn:string) => dataTasks.find(column => column?._id == idColumn));
     const dataTasksParsed: (DataTasks | undefined)[] = columns.map((column: ColumnModel | undefined) => {
       if(!column) return;
       const tasksColumn = column.taskIds.map((_id: string) => data.tasks.find((task: Task) => task._id == _id));
