@@ -7,7 +7,7 @@ import Button from '@mui/material/Button';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import ColumnModal from './ColumnModal';
 import { ToastContainer } from 'react-toastify';
-import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { useMutation, useQuery } from 'react-query';
 import { changeColumnTask, changeOrderTask, getData } from "../api/task";
 import { Column as ColumnModel, DataTasks, Task } from '../models';
 
