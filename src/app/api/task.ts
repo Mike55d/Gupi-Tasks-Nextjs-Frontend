@@ -1,6 +1,6 @@
 import axios from "axios";
 import { basePath } from "../components/constants";
-import { Column, Task, TaskForm } from "../models";
+import { ColumnTask, TaskForm } from "../models";
 
 export const createTask = async (params: { task: TaskForm, columnId: string }) => {
   const { task, columnId } = params;
@@ -46,10 +46,15 @@ export const deleteTask = async (params: { taskId: string, columnId: string }) =
   return data;
 }
 
-export const getData = async (): Promise<{ tasks: Task[], columns: Column[],orderColumns
-:string[]}> => {
-  const { data } = await axios.get(`${basePath}/tasks`);
-  return data;
+const fromServer = (data: any): ColumnTask => {
+  return {
+    columns: data.columns.filter((x: any) => x),
+    tasks: data.tasks.filter((x: any) => x),
+    orderColumns: data.orderColumns
+  };
 }
 
-
+export const getData = async () => {
+  const { data } = await axios.get(`${basePath}/tasks`);
+  return fromServer(data);
+}

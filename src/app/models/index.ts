@@ -23,5 +23,11 @@ export type DataTasks = {
     _id: string,
     title: string,
     taskIds: string[],
-    tasks: (Task | undefined)[]
+    tasks: Task[]
+}
+
+export interface ColumnTask {
+    tasks: Task[],
+    columns: Column[],
+    orderColumns: string[],
 }
