@@ -11,8 +11,13 @@ import { useMutation, useQuery } from 'react-query';
 import { changeColumnTask, changeOrderTask, getData } from "../api/task";
 import { Column as ColumnModel, DataTasks, Task } from '../models';
 import { changeOrderColumn } from '../api/column';
+import { useTranslation } from '../i18n/client';
 
-const Home = () => {
+type HomeType = {
+  lng: string
+}
+
+const Home = ({ lng }: HomeType) => {
   const [winReady, setwinReady] = useState(false);
   const [dataTasks, setDataTasks] = useState<DataTasks[]>([]);
   const [dataOrder, setDataOrder] = useState<string[]>([]);
@@ -21,6 +26,7 @@ const Home = () => {
   const { mutate: changeColumn } = useMutation(changeColumnTask);
   const { mutate: changeOrder } = useMutation(changeOrderTask);
   const { mutate: changeOrderCol } = useMutation(changeOrderColumn);
+  const { t } = useTranslation(lng, "translation", '');
 
   useEffect(() => {
     if (!data) return;
@@ -152,7 +158,7 @@ const Home = () => {
                   <Grid container spacing={1} {...provided.droppableProps} ref={provided.innerRef}>
                     {dataTasks.map((item: (DataTasks | undefined), index: number) => {
                       return item ? (
-                        <Column {...item} key={item._id} index={index} />
+                        <Column {...item} key={item._id} index={index} lng={lng} />
                       ) : null
                     })}
                     {provided.placeholder}
@@ -169,13 +175,14 @@ const Home = () => {
             endIcon={<AddCircleIcon />}
             onClick={() => toggleColumnModal(true)}
           >
-            Column
+            {t('BtnNewColumn')}
           </Button>
         </Grid>
       </Grid>
       <ColumnModal
         open={openColumnModal}
         toggleModal={toggleColumnModal}
+        lng={lng}
       />
       <ToastContainer />
     </>

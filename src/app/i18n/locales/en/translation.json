@@ -1,0 +1,11 @@
+{
+    "BtnNewColumn": "Column",
+    "titleModalColumn": "Create Column",
+    "titleModalTask": "Create Task",
+    "placeholderTitle": "Title",
+    "placeholderContent": "Content",
+    "requValidation": "required",
+    "createButton": "Create",
+    "cancelButton": "Cancel",
+    "deleteColumnValidation": "Please remove all tasks from column"
+}

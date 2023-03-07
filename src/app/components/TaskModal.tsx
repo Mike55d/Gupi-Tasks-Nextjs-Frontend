@@ -7,6 +7,7 @@ import * as Yup from 'yup';
 import { useMutation, useQueryClient } from 'react-query';
 import { createTask } from '../api/task';
 import { TaskForm } from '../models';
+import { useTranslation } from '../i18n/client';
 
 const style = {
     position: 'absolute' as 'absolute',
@@ -25,23 +26,29 @@ const initialValues = {
     content: ''
 }
 
-const validationSchema = Yup.object({
-    title: Yup.string().required('title required'),
-    content: Yup.string().required('content required'),
-})
+
 
 type TaskModalType = {
     open: boolean,
     handleClose: () => void;
     columnId: string;
+    lng: string;
 }
 
-const TaskModal = ({ open, handleClose, columnId }: TaskModalType) => {
+const TaskModal = ({ open, handleClose, columnId, lng }: TaskModalType) => {
 
     const queryClient = useQueryClient()
-    const { mutate } = useMutation(createTask, {onSuccess: () => {
-      queryClient.invalidateQueries("dataTasks");
-    }});
+    const { t } = useTranslation(lng, "translation", '');
+    const { mutate } = useMutation(createTask, {
+        onSuccess: () => {
+            queryClient.invalidateQueries("dataTasks");
+        }
+    });
+
+    const validationSchema = Yup.object({
+        title: Yup.string().required(`${t('placeholderTitle')} ${t('requValidation')}`),
+        content: Yup.string().required(`${t('placeholderContent')} ${t('requValidation')}`),
+    })
 
     const handleCancel = () => {
         handleClose();
@@ -60,7 +67,7 @@ const TaskModal = ({ open, handleClose, columnId }: TaskModalType) => {
             aria-describedby="modal-modal-description"
         >
             <Box sx={style}>
-                <Typography className={styles.titleModal} variant='h5'>Create Task</Typography>
+                <Typography className={styles.titleModal} variant='h5'>{t('titleModalTask')}</Typography>
                 <Formik
                     initialValues={initialValues}
                     validationSchema={validationSchema}
@@ -69,7 +76,7 @@ const TaskModal = ({ open, handleClose, columnId }: TaskModalType) => {
                     {formik => (
                         <form id="taskForm" onSubmit={formik.handleSubmit}>
                             <TextField
-                                label="title"
+                                label={t('placeholderTitle')}
                                 variant="outlined"
                                 className={styles.inputs}
                                 size="small"
@@ -83,7 +90,7 @@ const TaskModal = ({ open, handleClose, columnId }: TaskModalType) => {
                             <br />
                             <TextField
                                 id="outlined-multiline-static"
-                                label="content"
+                                label={t('placeholderContent')}
                                 multiline
                                 rows={4}
                                 className={styles.inputs}
@@ -103,7 +110,7 @@ const TaskModal = ({ open, handleClose, columnId }: TaskModalType) => {
                     className={styles.buttons}
                     onClick={handleCancel}
                 >
-                    Cancel
+                    {t('cancelButton')}
                 </Button>
                 <Button
                     type="submit"
@@ -112,7 +119,7 @@ const TaskModal = ({ open, handleClose, columnId }: TaskModalType) => {
                     color="success"
                     className={styles.buttons}
                 >
-                    Create
+                    {t('createButton')}
                 </Button>
             </Box>
         </Modal>

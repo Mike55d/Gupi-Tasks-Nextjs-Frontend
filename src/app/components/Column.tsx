@@ -17,12 +17,15 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useMutation, useQueryClient } from 'react-query';
 import { deleteColumn } from '../api/column';
 import { DataTasks, Task as TaskModel } from '../models';
+import { useTranslation } from '../i18n/client';
+
+type ColumnType = DataTasks & { index: number, lng: string }
 
 
-const Column = ({ _id, tasks, title, index }: DataTasks & { index: number }) => {
-    const [winReady, setwinReady] = useState(false);
+const Column = ({ _id, tasks, title, index, lng }: ColumnType) => {
     const [open, setOpen] = useState(false);
-    const queryClient = useQueryClient()
+    const queryClient = useQueryClient();
+    const { t } = useTranslation(lng, "translation", '');
     const { mutate } = useMutation(deleteColumn, {
         onSuccess: () => {
             queryClient.invalidateQueries("dataTasks");
@@ -31,7 +34,7 @@ const Column = ({ _id, tasks, title, index }: DataTasks & { index: number }) => 
 
     const validateDelete = () => {
         if (tasks.length) {
-            toast.warning("Please remove all tasks from column");
+            toast.warning(t('deleteColumnValidation'));
             return;
         }
         mutate(_id)
@@ -90,6 +93,7 @@ const Column = ({ _id, tasks, title, index }: DataTasks & { index: number }) => 
                 open={open}
                 handleClose={() => setOpen(false)}
                 columnId={_id}
+                lng={lng}
             />
         </>
     )

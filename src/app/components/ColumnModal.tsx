@@ -6,6 +6,7 @@ import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { useMutation, useQueryClient } from 'react-query';
 import { createColumn } from '../api/column';
+import { useTranslation } from '../i18n/client';
 
 const style = {
     position: 'absolute' as 'absolute',
@@ -23,18 +24,19 @@ const initialValues = {
     title: '',
 }
 
-const validationSchema = Yup.object({
-    title: Yup.string().required('title required'),
-})
-
 type ColumnModalType = {
     open: boolean,
-    toggleModal: (value:boolean) => void;
+    toggleModal: (value: boolean) => void;
+    lng: string
 }
 
-const ColumnModal = ({ open, toggleModal }: ColumnModalType) => {
+const ColumnModal = ({ open, toggleModal, lng }: ColumnModalType) => {
 
     const queryClient = useQueryClient()
+    const { t } = useTranslation(lng, "translation", '');
+    const validationSchema = Yup.object({
+        title: Yup.string().required(`${t('placeholderTitle')} ${t('requValidation')}`),
+    })
     const { mutate } = useMutation(createColumn, {
         onSuccess: () => {
             queryClient.invalidateQueries("dataTasks");
@@ -54,7 +56,7 @@ const ColumnModal = ({ open, toggleModal }: ColumnModalType) => {
             aria-describedby="modal-modal-description"
         >
             <Box sx={style}>
-                <Typography className={styles.titleModal} variant='h5'>Create Column</Typography>
+                <Typography className={styles.titleModal} variant='h5'>{t('titleModalColumn')}</Typography>
                 <Formik
                     initialValues={initialValues}
                     validationSchema={validationSchema}
@@ -63,7 +65,7 @@ const ColumnModal = ({ open, toggleModal }: ColumnModalType) => {
                     {formik => (
                         <form id="columnForm" onSubmit={formik.handleSubmit} className={styles.formModal}>
                             <TextField
-                                label="title"
+                                label={t('placeholderTitle')}
                                 variant="outlined"
                                 className={styles.inputs}
                                 size="small"
@@ -82,7 +84,7 @@ const ColumnModal = ({ open, toggleModal }: ColumnModalType) => {
                     className={styles.buttons}
                     onClick={() => toggleModal(false)}
                 >
-                    Cancel
+                    {t('cancelButton')}
                 </Button>
                 <Button
                     type="submit"
@@ -91,7 +93,7 @@ const ColumnModal = ({ open, toggleModal }: ColumnModalType) => {
                     color="success"
                     className={styles.buttons}
                 >
-                    Create
+                    {t('createButton')}
                 </Button>
             </Box>
         </Modal>
