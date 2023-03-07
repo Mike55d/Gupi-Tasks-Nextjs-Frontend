@@ -145,6 +145,7 @@ const Home = ({ lng }: HomeType) => {
     }
   }
 
+  if (!winReady) return;
   return (
     <>
       <Grid container style={{ marginTop: 20, paddingLeft: 10, paddingRight: 10 }}>
@@ -152,20 +153,18 @@ const Home = ({ lng }: HomeType) => {
           <DragDropContext
             onDragEnd={handleDragEnd}
           >
-            {winReady ? (
-              <Droppable droppableId='all-columns' direction='horizontal' type='column'>
-                {provided => (
-                  <Grid container spacing={1} {...provided.droppableProps} ref={provided.innerRef}>
-                    {dataTasks.map((item: (DataTasks | undefined), index: number) => {
-                      return item ? (
-                        <Column {...item} key={item._id} index={index} lng={lng} />
-                      ) : null
-                    })}
-                    {provided.placeholder}
-                  </Grid>
-                )}
-              </Droppable>
-            ) : null}
+            <Droppable droppableId='all-columns' direction='horizontal' type='column'>
+              {provided => (
+                <Grid container spacing={1} {...provided.droppableProps} ref={provided.innerRef}>
+                  {dataTasks.map((item: (DataTasks | undefined), index: number) => {
+                    return item ? (
+                      <Column {...item} key={item._id} index={index} lng={lng} />
+                    ) : null
+                  })}
+                  {provided.placeholder}
+                </Grid>
+              )}
+            </Droppable>
           </DragDropContext>
         </Grid>
         <Grid item xs={1}>
