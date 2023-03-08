@@ -12,6 +12,7 @@ import { changeColumnTask, changeOrderTask, getData } from "../api/task";
 import { Column as ColumnModel, DataTasks, Task } from '../models';
 import { changeOrderColumn } from '../api/column';
 import { useTranslation } from '../i18n/client';
+import Header from './Header';
 
 type HomeType = {
   lng: string
@@ -44,8 +45,8 @@ const Home = ({ lng }: HomeType) => {
   }, [data])
 
   useEffect(() => {
-    setTimeout(() => setwinReady(true), 500);
-  }, []);
+    setTimeout(() => setwinReady(true), 300);
+  }, [lng]);
 
   const toggleColumnModal = (value: boolean) => {
     setOpenColumnModal(value);
@@ -145,26 +146,30 @@ const Home = ({ lng }: HomeType) => {
     }
   }
 
-  if (!winReady) return;
   return (
     <>
+      <Header lng={lng} />
       <Grid container style={{ marginTop: 20, paddingLeft: 10, paddingRight: 10 }}>
         <Grid item xs={11}>
           <DragDropContext
             onDragEnd={handleDragEnd}
           >
-            <Droppable droppableId='all-columns' direction='horizontal' type='column'>
-              {provided => (
-                <Grid container spacing={1} {...provided.droppableProps} ref={provided.innerRef}>
-                  {dataTasks.map((item: (DataTasks | undefined), index: number) => {
-                    return item ? (
-                      <Column {...item} key={item._id} index={index} lng={lng} />
-                    ) : null
-                  })}
-                  {provided.placeholder}
-                </Grid>
-              )}
-            </Droppable>
+            {winReady && (
+
+              <Droppable droppableId='all-columns' direction='horizontal' type='column'>
+                {provided => (
+                  <Grid container spacing={1} {...provided.droppableProps} ref={provided.innerRef}>
+                    {dataTasks.map((item: (DataTasks | undefined), index: number) => {
+                      return item ? (
+                        <Column {...item} key={item._id} index={index} lng={lng} />
+                      ) : null
+                    })}
+                    {provided.placeholder}
+                  </Grid>
+                )}
+              </Droppable>
+            )}
+
           </DragDropContext>
         </Grid>
         <Grid item xs={1}>
