@@ -1,5 +1,6 @@
 body{
     background-color:rgb(76, 154, 255);
+    margin: 0;
 }
 
 .MuiPaper-root.MuiPaper-outlined.MuiPaper-rounded::-webkit-scrollbar {

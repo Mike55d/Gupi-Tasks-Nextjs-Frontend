@@ -13,6 +13,7 @@ import { Column as ColumnModel, DataTasks, Task } from '../models';
 import { changeOrderColumn } from '../api/column';
 import { useTranslation } from '../i18n/client';
 import Header from './Header';
+import LinearProgress from '@mui/material/LinearProgress';
 
 type HomeType = {
   lng: string
@@ -23,11 +24,25 @@ const Home = ({ lng }: HomeType) => {
   const [dataTasks, setDataTasks] = useState<DataTasks[]>([]);
   const [dataOrder, setDataOrder] = useState<string[]>([]);
   const [openColumnModal, setOpenColumnModal] = useState<boolean>(false);
-  const { data } = useQuery("dataTasks", getData);
-  const { mutate: changeColumn } = useMutation(changeColumnTask);
-  const { mutate: changeOrder } = useMutation(changeOrderTask);
-  const { mutate: changeOrderCol } = useMutation(changeOrderColumn);
+  const {
+    data,
+    isLoading: isLoadingData,
+  } = useQuery("dataTasks", getData);
+  const {
+    mutate: changeColumn,
+    isLoading: isLoadingChangeColumn,
+  } = useMutation(changeColumnTask);
+  const {
+    mutate: changeOrder,
+    isLoading: isLoadingchangeOrder,
+  } = useMutation(changeOrderTask);
+  const {
+    mutate: changeOrderCol,
+    isLoading: isLoadingchangeOrderCol,
+  } = useMutation(changeOrderColumn);
+
   const { t } = useTranslation(lng, "translation", '');
+  const [showLoading, setShowLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (!data) return;
@@ -43,6 +58,26 @@ const Home = ({ lng }: HomeType) => {
     setDataTasks(dataTasksParsed);
     setDataOrder(data.orderColumns);
   }, [data])
+
+  useEffect(() => {
+    console.log(isLoadingChangeColumn);
+    if (
+      isLoadingData ||
+      isLoadingChangeColumn ||
+      isLoadingchangeOrder ||
+      isLoadingchangeOrderCol
+    ) {
+      console.log("showing")
+      setShowLoading(true);
+    } else {
+      setShowLoading(false);
+    }
+  }, [
+    isLoadingData,
+    isLoadingChangeColumn,
+    isLoadingchangeOrder,
+    isLoadingchangeOrderCol,
+  ])
 
   useEffect(() => {
     setTimeout(() => setwinReady(true), 300);
@@ -148,6 +183,9 @@ const Home = ({ lng }: HomeType) => {
 
   return (
     <>
+      <div style={{ height: 4 }}>
+        {showLoading && <LinearProgress color="success" />}
+      </div>
       <Header lng={lng} />
       <Grid container style={{ marginTop: 20, paddingLeft: 10, paddingRight: 10 }}>
         <Grid item xs={11}>
@@ -161,7 +199,7 @@ const Home = ({ lng }: HomeType) => {
                   <Grid container spacing={1} {...provided.droppableProps} ref={provided.innerRef}>
                     {dataTasks.map((item: (DataTasks | undefined), index: number) => {
                       return item ? (
-                        <Column {...item} key={item._id} index={index} lng={lng} />
+                        <Column {...item} key={item._id} index={index} lng={lng} setShowLoading={setShowLoading} />
                       ) : null
                     })}
                     {provided.placeholder}
@@ -173,20 +211,23 @@ const Home = ({ lng }: HomeType) => {
           </DragDropContext>
         </Grid>
         <Grid item xs={1}>
-          <Button
-            variant="contained"
-            color='success'
-            endIcon={<AddCircleIcon />}
-            onClick={() => toggleColumnModal(true)}
-          >
-            {t('BtnNewColumn')}
-          </Button>
+          {winReady && (
+            <Button
+              variant="contained"
+              color='success'
+              endIcon={<AddCircleIcon />}
+              onClick={() => toggleColumnModal(true)}
+            >
+              {t('BtnNewColumn')}
+            </Button>
+          )}
         </Grid>
       </Grid>
       <ColumnModal
         open={openColumnModal}
         toggleModal={toggleColumnModal}
         lng={lng}
+        setShowLoading={setShowLoading}
       />
       <ToastContainer />
     </>

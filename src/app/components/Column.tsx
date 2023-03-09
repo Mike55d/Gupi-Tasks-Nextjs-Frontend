@@ -19,10 +19,14 @@ import { deleteColumn } from '../api/column';
 import { DataTasks, Task as TaskModel } from '../models';
 import { useTranslation } from '../i18n/client';
 
-type ColumnType = DataTasks & { index: number, lng: string }
+type ColumnType = DataTasks & {
+    index: number,
+    lng: string,
+    setShowLoading: (value:boolean) => void;
+}
 
 
-const Column = ({ _id, tasks, title, index, lng }: ColumnType) => {
+const Column = ({ _id, tasks, title, index, lng,setShowLoading}: ColumnType) => {
     const [open, setOpen] = useState(false);
     const queryClient = useQueryClient();
     const { t } = useTranslation(lng, "translation", '');
@@ -94,6 +98,7 @@ const Column = ({ _id, tasks, title, index, lng }: ColumnType) => {
                 handleClose={() => setOpen(false)}
                 columnId={_id}
                 lng={lng}
+                setShowLoading={setShowLoading}
             />
         </>
     )

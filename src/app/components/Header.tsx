@@ -29,6 +29,7 @@ const Header = ({ lng }: HeaderType) => {
 					id="language-select"
 					value={lng}
 					onChange={handleChange}
+					style={{marginTop:5,marginRight:5}}
 				>
 					<MenuItem value="en">EN</MenuItem>
 					<MenuItem value="es">ES</MenuItem>

@@ -33,15 +33,18 @@ type TaskModalType = {
     handleClose: () => void;
     columnId: string;
     lng: string;
+    setShowLoading: (value:boolean) => void;
 }
 
-const TaskModal = ({ open, handleClose, columnId, lng }: TaskModalType) => {
+const TaskModal = ({ open, handleClose, columnId, lng,setShowLoading}: TaskModalType) => {
 
     const queryClient = useQueryClient()
     const { t } = useTranslation(lng, "translation", '');
     const { mutate } = useMutation(createTask, {
+        onMutate:() => setShowLoading(true),
         onSuccess: () => {
             queryClient.invalidateQueries("dataTasks");
+            setShowLoading(false);
         }
     });
 

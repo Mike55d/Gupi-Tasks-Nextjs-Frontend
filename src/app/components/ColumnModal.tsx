@@ -28,9 +28,10 @@ type ColumnModalType = {
     open: boolean,
     toggleModal: (value: boolean) => void;
     lng: string
+    setShowLoading: (value:boolean) => void;
 }
 
-const ColumnModal = ({ open, toggleModal, lng }: ColumnModalType) => {
+const ColumnModal = ({ open, toggleModal, lng ,setShowLoading}: ColumnModalType) => {
 
     const queryClient = useQueryClient()
     const { t } = useTranslation(lng, "translation", '');
@@ -38,14 +39,16 @@ const ColumnModal = ({ open, toggleModal, lng }: ColumnModalType) => {
         title: Yup.string().required(`${t('placeholderTitle')} ${t('requValidation')}`),
     })
     const { mutate } = useMutation(createColumn, {
+        onMutate: () => setShowLoading(true),
         onSuccess: () => {
             queryClient.invalidateQueries("dataTasks");
+            setShowLoading(false);
         }
     });
 
-    const handleSubmit = async (form: { title: string }) => {
-        mutate(form);
+    const handleSubmit = (form: { title: string }) => {
         toggleModal(false);
+        mutate(form);
     }
 
     return (
